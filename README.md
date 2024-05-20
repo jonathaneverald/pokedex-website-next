@@ -1,4 +1,4 @@
-# Pokedex: A Next.js Web App with Tailwind CSS and PokeAPI made by Jonathan Everald
+## Pokedex: A Next.js Web App with Tailwind CSS and PokeAPI
 
 This is a dynamic Pokedex website built using Next.js, Tailwind CSS, and data from the PokeAPI. It allows you to explore and learn about all your favorite Pokemon!
 
