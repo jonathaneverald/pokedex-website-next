@@ -33,7 +33,6 @@ const PokemonThumbnail = (props: {
 
   const navigate = useRouter();
   const onClick = () => {
-    // localStorage.setItem("pokemon", props.name);
     setTimeout(() => {
       navigate.push(`/pokemon-card/${props.id}`);
     }, 1500);

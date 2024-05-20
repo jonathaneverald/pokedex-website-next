@@ -1,6 +1,12 @@
 import { Header } from "@/components/Header";
+import { PokemonWeaknesses } from "@/components/PokemonWeakness";
 import type { InferGetServerSidePropsType, GetServerSideProps } from "next";
 import { useRouter } from "next/router";
+
+interface Weakness {
+  name: string;
+  url: string;
+}
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { pokemonId } = context.params as { pokemonId: string };
@@ -12,6 +18,22 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     `https://pokeapi.co/api/v2/pokemon/${pokemonId}`
   );
   const fetchedPokemon = await response.json();
+
+  const fetchDesc = await fetch(fetchedPokemon.species.url);
+  const responseDesc = await fetchDesc.json();
+  const desc: string = responseDesc.flavor_text_entries[4].flavor_text;
+  const regex = /[\n\f]/g;
+  const pokemonDesc = desc.replace(regex, " ");
+
+  const fetchWeak = await fetch(fetchedPokemon.types[0].type.url);
+  const responseWeak = await fetchWeak.json();
+  const weaknesses = responseWeak.damage_relations.double_damage_from;
+  const fetchedWeaknesses: Weakness[] = weaknesses;
+  const weaknessNames: string[] = fetchedWeaknesses.map(
+    (weakness) => weakness.name
+  );
+  console.log(weaknessNames, "line 24");
+
   const pokemon = {
     id: fetchedPokemon.id,
     name: fetchedPokemon.name,
@@ -23,6 +45,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     special_atk: fetchedPokemon.stats[3].base_stat,
     def: fetchedPokemon.stats[2].base_stat,
     special_def: fetchedPokemon.stats[4].base_stat,
+    desc: pokemonDesc,
+    weakness: weaknessNames,
   };
 
   return {
@@ -58,18 +82,22 @@ export default function PokemonCardPage({
     colors[pokemon.type]
   }`;
 
+  const imgStyle = `w-1/3 object-cover p-5 rounded-xl ${colors[pokemon.type]}`;
+
   const navigate = useRouter();
   const handleBack = () => {
     setTimeout(() => {
       navigate.push("/");
     }, 200);
   };
+
   const handlePrevious = () => {
     const currentPokemonId = pokemon.id - 1;
     setTimeout(() => {
       navigate.push(`/pokemon-card/${currentPokemonId}`);
     }, 200);
   };
+
   const handleNext = () => {
     const currentPokemonId = pokemon.id + 1;
     setTimeout(() => {
@@ -80,71 +108,56 @@ export default function PokemonCardPage({
   return (
     <>
       <Header />
-      <div className={style}>
-        <div className="text-center mb-10">
-          <h2 className="text-4xl tracking-tight font-bold text-primary-800 capitalize">
-            {pokemon.name}
-          </h2>
-          <h3 className="text-xl tracking-tight font-bold text-primary-800 capitalize">
-            {pokemon.type}
-          </h3>
-        </div>
 
-        <div className="flex flex-col md:flex-row">
-          <div className="mr-0 md:mr-8 mb-6 md:mb-0 flex items-center">
-            <img
-              className="w-1/2 md:w-full mx-auto size-1/2 object-contain"
-              src={pokemon.image}
-              alt="Pokemon Pict"
-            />
+      <div className="flex flex-col bg-slate-300 m-4 rounded-xl p-2">
+        <h1 className="capitalize text-xl font-bold">
+          {pokemon.name} #{pokemon.id}
+        </h1>
+        <h2 className="capitalize text-lg font-semibold">{pokemon.type}</h2>
+        <div className="grid grid-cols-2 gap-4 p-2 m-2">
+          <div className="flex flex-col items-center">
+            <img className={imgStyle} src={pokemon.image} />
           </div>
-          <div className="flex-1 flex flex-col sm:flex-row flex-wrap -mb-4 -mx-2">
-            <div className="w-full sm:w-1/2 mb-4 px-2 ">
-              <div className="h-full py-4 px-6 border-2 border-slate-950 rounded-xl">
-                <h3 className="text-2xl font-bold text-md mb-6">HP</h3>
-                <p className="text-2xl font-bold">{pokemon.hp}</p>
-              </div>
+          <div className="place-self-center">
+            <p className="text-xl font-medium">{pokemon.desc}</p>
+          </div>
+          <div className="grid grid-cols-3 rounded-xl font-bold">
+            <div className="flex flex-col place-self-center">
+              <p>Attack</p>
+              <p>{pokemon.atk}</p>
             </div>
-            <div className="w-full sm:w-1/2 mb-4 px-2 ">
-              <div className="h-full py-4 px-6 border-2 border-slate-950 rounded-xl">
-                <h3 className="text-2xl font-bold text-md mb-6">Speed</h3>
-                <p className="text-2xl font-bold">{pokemon.speed}</p>
-              </div>
+            <div className="flex flex-col place-self-center">
+              <p>Defense</p>
+              <p>{pokemon.def}</p>
             </div>
-
-            <div className="w-full sm:w-1/2 mb-4 px-2 ">
-              <div className="h-full py-4 px-6 border-2 border-slate-950 rounded-xl">
-                <h3 className="text-2xl font-bold text-md mb-6">Attack</h3>
-                <p className="text-2xl font-bold">{pokemon.atk}</p>
-              </div>
+            <div className="flex flex-col place-self-center">
+              <p>HP</p>
+              <p>{pokemon.hp}</p>
             </div>
-
-            <div className="w-full sm:w-1/2 mb-4 px-2 ">
-              <div className="h-full py-4 px-6 border-2 border-slate-950 rounded-xl">
-                <h3 className="text-2xl font-bold text-md mb-6">
-                  Special Attack
-                </h3>
-                <p className="text-2xl font-bold">{pokemon.special_atk}</p>
-              </div>
+            <div className="flex flex-col place-self-center">
+              <p>Special Attack</p>
+              <p>{pokemon.special_atk}</p>
             </div>
-
-            <div className="w-full sm:w-1/2 mb-4 px-2 ">
-              <div className="h-full py-4 px-6 border-2 border-slate-950 rounded-xl">
-                <h3 className="text-2xl font-bold text-md mb-6">Defense</h3>
-                <p className="text-2xl font-bold">{pokemon.def}</p>
-              </div>
+            <div className="flex flex-col place-self-center">
+              <p>Special Defense</p>
+              <p>{pokemon.special_def}</p>
             </div>
-
-            <div className="w-full sm:w-1/2 mb-4 px-2 ">
-              <div className="h-full py-4 px-6 border-2 border-slate-950 rounded-xl">
-                <h3 className="text-2xl font-bold text-md mb-6">
-                  Special Defense
-                </h3>
-                <p className="text-2xl font-bold">{pokemon.special_def}</p>
-              </div>
+            <div className="flex flex-col place-self-center">
+              <p>Speed</p>
+              <p>{pokemon.speed}</p>
+            </div>
+          </div>
+          <div className="flex flex-col place-self-center">
+            <h1 className="font-bold p-5">Weaknesses</h1>
+            <div className="flex flex-row gap-2 justify-center">
+              {pokemon.weakness.map((weaknessName: string) => (
+                <PokemonWeaknesses name={weaknessName} />
+              ))}
             </div>
           </div>
         </div>
+      </div>
+      <div className="flex flex-row justify-center p-5 m-5">
         <button
           onClick={handlePrevious}
           className="text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm m-2 px-5 py-2.5 text-center"
@@ -155,7 +168,7 @@ export default function PokemonCardPage({
           onClick={handleBack}
           className="text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm m-2 px-5 py-2.5 text-center"
         >
-          Back to Home
+          Explore More Pokémon
         </button>
         <button
           onClick={handleNext}
@@ -164,6 +177,7 @@ export default function PokemonCardPage({
           Next
         </button>
       </div>
+      <Header />
     </>
   );
 }
