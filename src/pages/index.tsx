@@ -21,7 +21,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
     return {
       id: data.id,
       name: data.name,
-      image: data.sprites.other.dream_world.front_default,
+      image: data.sprites.other.showdown.front_default,
       type: data.types[0].type.name,
     };
   });
@@ -56,7 +56,7 @@ export default function Home({
       return {
         id: data.id,
         name: data.name,
-        image: data.sprites.other.dream_world.front_default,
+        image: data.sprites.other.showdown.front_default,
         type: data.types[0].type.name,
       };
     });
@@ -83,7 +83,7 @@ export default function Home({
           onClick={fetchAllPokemons}
           className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
         >
-          Load more Pokemons...
+          Load more Pokémons...
         </button>
       </div>
     </>

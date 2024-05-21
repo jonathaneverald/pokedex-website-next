@@ -12,7 +12,7 @@ export const SearchPokemon = () => {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pokemonName) {
-      setErrorMessage("Pokemon name search input can not be empty!");
+      setErrorMessage("Pokémon name search input can not be empty!");
       return;
     }
 
