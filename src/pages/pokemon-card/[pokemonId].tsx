@@ -2,25 +2,22 @@ import { Header } from "@/components/Header";
 import { PokemonWeaknesses } from "@/components/PokemonWeakness";
 import type { InferGetServerSidePropsType, GetServerSideProps } from "next";
 import { useRouter } from "next/router";
+import { useState } from "react";
 
 interface Weakness {
   name: string;
   url: string;
 }
 
-interface Abilities {
-  name: string;
-  url: string;
-}
-
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { pokemonId } = context.params as { pokemonId: string };
-  if (pokemonId === "0") {
+  const pokemonIdNumber = parseInt(pokemonId, 10);
+  if (pokemonIdNumber === 0) {
     useRouter().push("/");
   }
 
   const response = await fetch(
-    `https://pokeapi.co/api/v2/pokemon/${pokemonId}`
+    `https://pokeapi.co/api/v2/pokemon/${pokemonIdNumber}`
   );
   const fetchedPokemon = await response.json();
 
@@ -33,12 +30,30 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const fetchWeak = await fetch(fetchedPokemon.types[0].type.url);
   const responseWeak = await fetchWeak.json();
   const weaknesses = responseWeak.damage_relations.double_damage_from;
-  console.log(weaknesses, "line 36");
 
   const fetchedWeaknesses: Weakness[] = weaknesses;
   const weaknessNames: string[] = fetchedWeaknesses.map(
     (weakness) => weakness.name
   );
+
+  let previousId;
+  let fetchedPrev;
+  if (pokemonIdNumber !== 1) {
+    previousId = pokemonIdNumber - 1;
+    const responsePrev = await fetch(
+      `https://pokeapi.co/api/v2/pokemon/${previousId}`
+    );
+    fetchedPrev = await responsePrev.json();
+    if (!responsePrev.ok) {
+      throw new Error("No previous pokemon!");
+    }
+  }
+
+  const nextId = pokemonIdNumber + 1;
+  const responseNext = await fetch(
+    `https://pokeapi.co/api/v2/pokemon/${nextId}`
+  );
+  const fetchedNext = await responseNext.json();
 
   const pokemon = {
     id: fetchedPokemon.id,
@@ -56,16 +71,22 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     weight: fetchedPokemon.weight,
     ability: fetchedPokemon.abilities[0].ability.name,
     weakness: weaknessNames,
+    prevName: fetchedPrev ? fetchedPrev.name : null,
+    nextName: fetchedNext.name,
   };
 
   return {
-    props: { pokemon: pokemon },
+    props: {
+      pokemon: pokemon,
+    },
   };
 };
 
 export default function PokemonCardPage({
   pokemon,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const [pokemonId, setPokemonId] = useState<number>(pokemon.id);
+
   const colors: { [key: string]: string } = {
     normal: "bg-normal",
     fire: "bg-fire",
@@ -100,6 +121,7 @@ export default function PokemonCardPage({
 
   const handlePrevious = () => {
     const currentPokemonId = pokemon.id - 1;
+    setPokemonId(currentPokemonId);
     setTimeout(() => {
       navigate.push(`/pokemon-card/${currentPokemonId}`);
     }, 200);
@@ -107,6 +129,7 @@ export default function PokemonCardPage({
 
   const handleNext = () => {
     const currentPokemonId = pokemon.id + 1;
+    setPokemonId(currentPokemonId);
     setTimeout(() => {
       navigate.push(`/pokemon-card/${currentPokemonId}`);
     }, 200);
@@ -115,7 +138,35 @@ export default function PokemonCardPage({
   return (
     <>
       <Header />
-      <div className="flex flex-col justify-center content-center place-content-center place-items-center h-full w-full">
+      <div className="flex flex-row justify-center p-2 m-2">
+        {pokemonId != 1 && (
+          <>
+            <div className="flex flex-col">
+              <button
+                onClick={handlePrevious}
+                className="text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm m-2 px-5 py-2.5 text-center"
+              >
+                Previous
+              </button>
+              <p className="capitalize text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm m-2 px-5 py-2.5 text-center">
+                {pokemon.prevName}
+              </p>
+            </div>
+          </>
+        )}
+        <div className="flex flex-col">
+          <button
+            onClick={handleNext}
+            className="text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm m-2 px-5 py-2.5 text-center"
+          >
+            Next
+          </button>
+          <p className="capitalize text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm m-2 px-5 py-2.5 text-center">
+            {pokemon.nextName}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-col items-center justify-center w-full">
         <div className="flex flex-col bg-slate-300 m-4 rounded-xl p-2">
           <h1 className="capitalize text-xl font-bold">
             {pokemon.name} #{pokemon.id}
@@ -178,28 +229,15 @@ export default function PokemonCardPage({
             </div>
           </div>
         </div>
-        <div className="flex flex-row justify-center p-2 m-2">
-          <button
-            onClick={handlePrevious}
-            className="text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm m-2 px-5 py-2.5 text-center"
-          >
-            Previous
-          </button>
-          <button
-            onClick={handleBack}
-            className="text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm m-2 px-5 py-2.5 text-center"
-          >
-            Explore More Pokémon
-          </button>
-          <button
-            onClick={handleNext}
-            className="text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm m-2 px-5 py-2.5 text-center"
-          >
-            Next
-          </button>
-        </div>
       </div>
-      {/* <Header /> */}
+      <div className="flex flex-row justify-center p-2 m-2">
+        <button
+          onClick={handleBack}
+          className="text-white bg-pokemon-blue hover:bg-blue-500 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm m-2 px-5 py-2.5 text-center"
+        >
+          Explore More Pokémon
+        </button>
+      </div>
     </>
   );
 }

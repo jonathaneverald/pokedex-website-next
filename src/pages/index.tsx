@@ -3,6 +3,7 @@ import { SearchPokemon } from "@/components/SearchPokemon";
 import React, { useState } from "react";
 import type { InferGetServerSidePropsType, GetServerSideProps } from "next";
 import PokemonThumbnail from "../components/PokemonThumbnail";
+import { Head } from "next/document";
 
 export const getServerSideProps: GetServerSideProps = async () => {
   //Fetch data from pokeapi
@@ -39,8 +40,10 @@ export default function Home({
 }) {
   const [allPokemons, setAllPokemons] = useState<any[]>(pokemonObject);
   const [loadMore, setLoadMore] = useState<string>(nextPage);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const fetchAllPokemons = async () => {
+    setIsLoading(true);
     const response = await fetch(loadMore);
     if (!response.ok) {
       throw new Error("Failed to fetch Pokemon");
@@ -62,30 +65,42 @@ export default function Home({
     });
     const createPokemonObject = await Promise.all(fetchPokemon);
     setAllPokemons((oldPokemons) => [...oldPokemons, ...createPokemonObject]);
+    setIsLoading(false);
   };
 
   return (
     <>
-      <Header />
-      <SearchPokemon />
-      <div className="pokemon-container">
-        <div className="pokemon-cards w-fit mx-auto grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 justify-items-center justify-center gap-y-20 gap-x-14 mt-10 mb-5">
-          {allPokemons.map((pokemon) => (
-            <PokemonThumbnail
-              id={pokemon.id}
-              name={pokemon.name}
-              image={pokemon.image}
-              type={pokemon.type}
-            />
-          ))}
-        </div>
-        <button
-          onClick={fetchAllPokemons}
-          className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
-        >
-          Load more Pokémons...
-        </button>
-      </div>
+      <main>
+        <Header />
+        <section>
+          <SearchPokemon />
+          <div className="pokemon-container">
+            <div className="pokemon-cards w-fit mx-auto grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 justify-items-center justify-center gap-y-20 gap-x-14 mt-10 mb-5">
+              {allPokemons.map((pokemon) => (
+                <PokemonThumbnail
+                  id={pokemon.id}
+                  name={pokemon.name}
+                  image={pokemon.image}
+                  type={pokemon.type}
+                />
+              ))}
+            </div>
+            {!isLoading && (
+              <button
+                onClick={fetchAllPokemons}
+                className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2"
+              >
+                Load more Pokémons...
+              </button>
+            )}
+            {isLoading && (
+              <button className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2">
+                Loading...
+              </button>
+            )}
+          </div>
+        </section>
+      </main>
     </>
   );
 }
